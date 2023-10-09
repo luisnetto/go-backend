@@ -21,7 +21,10 @@ func main() {
 
 	router.POST("/tarefas", criarTarefa)
 	router.GET("/tarefas", buscarTarefas)
-
+	router.GET("/tarefas/:id", buscarTarefa)
+	router.DELETE("/tarefas/:id", excluirTarefa)
+	router.PUT("/tarefas/:id", editarTarefa)
+	router.GET("contagem-tarefas", contagemTarefas)
 	router.Run(":3000")
 }
 
@@ -43,4 +46,44 @@ func buscarTarefas(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, itens)
+}
+
+func buscarTarefa(c *gin.Context) {
+	id := c.Param("id")
+	tarefa, existe := tarefas[id]
+	if !existe {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tarefa não Encontrada!"})
+		return
+	}
+	c.JSON(http.StatusOK, tarefa)
+}
+
+func excluirTarefa(c *gin.Context) {
+	id := c.Param("id")
+	_, existe := tarefas[id]
+	if !existe {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tarefa não Encontrada!"})
+		return
+	}
+	delete(tarefas, id)
+	c.JSON(http.StatusOK, gin.H{"message": "Tarefa excluída"})
+}
+
+func editarTarefa(c *gin.Context) {
+	var tarefa Tarefa
+	id := c.Param("id")
+	if err := c.ShouldBindJSON(&tarefa); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	_, existe := tarefas[id]
+	if !existe {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Tarefa não Encontrada!"})
+		return
+	}
+	tarefas[id] = tarefa
+	c.JSON(http.StatusOK, tarefa)
+}
+func contagemTarefas(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"quantidade_tarefas": len(tarefas)})
 }
